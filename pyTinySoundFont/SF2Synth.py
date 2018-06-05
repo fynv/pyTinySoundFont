@@ -309,10 +309,10 @@ def SynthVoice(inputSamples, numSamples, voice, outputmode, samplerate):
 
 	return (countSamples,outBuf)
 
-def SynthNote(inputSamples, presets, preset_index, key, vel, numSamples, outputmode = STEREO_INTERLEAVED, samplerate = 44100.0, global_gain_db = 0.0):
+def SynthNote(inputSamples, preset, key, vel, numSamples, outputmode = STEREO_INTERLEAVED, samplerate = 44100.0, global_gain_db = 0.0):
 	midiVelocity = int(vel*127)
 	voices=[]
-	for region in presets[preset_index]['regions']:
+	for region in preset['regions']:
 		if key < region['lokey'] or key > region['hikey'] or midiVelocity < region['lovel'] or midiVelocity > region['hivel']:
 			continue
 
