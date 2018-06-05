@@ -253,9 +253,9 @@ def SynthVoice(inputSamples, numSamples, voice, outputmode, samplerate):
 
 		if dynamicLowpass:
 			fres = tmpInitialFilterFc + voice['modlfo']['level'] * tmpModLfoToFilterFc + voice['modenv']['level'] * tmpModEnvToFilterFc
-			tmpLowpass['active'] = fres <= 13500.0
-			if tmpLowpass['active']:
-				VoiceLowpassSetup(tmpLowpass, Cents2Hertz(fres)/tmpSampleRate)
+			tmpLowPass['active'] = fres <= 13500.0
+			if tmpLowPass['active']:
+				VoiceLowpassSetup(tmpLowPass, Cents2Hertz(fres)/tmpSampleRate)
 
 		if dynamicPitchRatio:
 			pitchRatio = TimeCents2Sec(voice['pitchInputTimecents'] + (voice['modlfo']['level']*tmpModLfoToPitch +voice['viblfo']['level']*tmpVibLfoToPitch + voice['modenv']['level']*tmpModEnvToPitch))*  voice['pitchOutputFactor']
@@ -310,10 +310,11 @@ def SynthVoice(inputSamples, numSamples, voice, outputmode, samplerate):
 	return (countSamples,outBuf)
 
 def SynthNote(inputSamples, preset, key, vel, numSamples, outputmode = STEREO_INTERLEAVED, samplerate = 44100.0, global_gain_db = 0.0):
+	ikey=int(key+0.5)
 	midiVelocity = int(vel*127)
 	voices=[]
 	for region in preset['regions']:
-		if key < region['lokey'] or key > region['hikey'] or midiVelocity < region['lovel'] or midiVelocity > region['hivel']:
+		if ikey < region['lokey'] or ikey > region['hikey'] or midiVelocity < region['lovel'] or midiVelocity > region['hivel']:
 			continue
 
 		voice = {
