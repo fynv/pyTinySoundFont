@@ -244,10 +244,12 @@ def SynthVoice(inputSamples, numSamples, voice, outputmode, samplerate):
 		blockSamples = TSF_RENDER_EFFECTSAMPLEBLOCK
 		countSamples += blockSamples
 
-		if countSamples >= numSamples:
+		if countSamples >= numSamples and voice['ampenv']['segment']<TSF_SEGMENT_RELEASE:
 			VoiceEnvelopeNextsegment_Sustain(voice['ampenv'], samplerate)
 			VoiceEnvelopeNextsegment_Sustain(voice['modenv'], samplerate)
-			isLooping = False
+			if voice['region']['loop_mode'] == TSF_LOOPMODE_SUSTAIN:
+				# Continue playing, but stop looping.
+				isLooping = False
 
 		if dynamicLowpass:
 			fres = tmpInitialFilterFc + voice['modlfo']['level'] * tmpModLfoToFilterFc + voice['modenv']['level'] * tmpModEnvToFilterFc
