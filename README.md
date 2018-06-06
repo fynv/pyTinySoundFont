@@ -78,7 +78,7 @@ The use case is that sometimes we just want to render some preprogrammed notes t
 	# Render C5, required length is set to 2 seconds
 	# The actual returned buffer will be a little longer than 2 seconds
 	# There will some extra samples after the loop is ended
-	res=tsf.SynthNote(sf2[1], presets, 0, 60, 1.0, 44100*2)
+	res=tsf.SynthNote(sf2[1], presets[0], 60, 1.0, 44100*2)
 
 	# Utility to convert float32 to short16
 	wavS16=tsf.F32ToS16(res[1], 1.0)
