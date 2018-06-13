@@ -93,3 +93,7 @@ The use case is that sometimes we just want to render some preprogrammed notes t
 		wavFile.writeframes(wavS16)
 
 ```
+
+## License
+
+pyTinySoundFont is available under the [MIT license](https://choosealicense.com/licenses/mit/).
