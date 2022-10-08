@@ -24,6 +24,8 @@ module_SF2Synth = Extension(
 	'pyTinySoundFont.PySF2Synth',
 	sources = SF2Synth_Src,
 	include_dirs = SF2Synth_IncludeDirs,
+	py_limited_api = True,
+	define_macros=[('Py_LIMITED_API', '0x03020000')],
 	extra_compile_args=extra_compile_args)
 
 setup(
