@@ -1,7 +1,4 @@
-from .PySF2Synth import S16ToF32
-from .PySF2Synth import F32ToS16
-from .PySF2Synth import MaxValueF32
-
+from .Binding import F32Buf
 from .SF2 import LoadSF2
 from .SF2Presets import LoadPresets
 
@@ -15,5 +12,3 @@ MONO = 2
 
 from .SF2Synth import SynthNote
 from .SF2SynthRT import TinySoundFont
-
-

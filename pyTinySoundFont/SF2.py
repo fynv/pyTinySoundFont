@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import struct
-from .PySF2Synth import S16ToF32
+from .Binding import F32Buf
+
 def decode_string(with_zero):
 	i=0
 	while i<len(with_zero):
@@ -138,7 +139,7 @@ def LoadSF2(fn):
 					chunk = ReadRiffChunk(f)
 					if chunk[0]=='smpl':
 						s16samples=f.read(chunk[1]) 
-						fontSamples=S16ToF32(s16samples)
+						fontSamples = F32Buf.from_s16(s16samples)
 					else:
 						f.seek(chunk[1],1)
 			else:

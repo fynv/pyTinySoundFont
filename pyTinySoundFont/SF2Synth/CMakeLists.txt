@@ -1,24 +1,15 @@
 cmake_minimum_required (VERSION 3.0)
 
-find_package(PythonLibs 3 REQUIRED)
+project(SF2Synth)
+
 
 set(SOURCES
+api.cpp
 Synth.cpp
-SF2Synth_Module.cpp
 )
 
 set(HEADERS 
 Synth.h
-)
-
-
-set (INCLUDE_DIR
-${PYTHON_INCLUDE_DIRS}
-.
-)
-
-set (LINK_LIBS 
-${PYTHON_LIBRARIES}
 )
 
 
@@ -32,21 +23,12 @@ add_definitions(-std=c++0x)
 add_compile_options(-fPIC)
 endif()
 
-include_directories(${INCLUDE_DIR})
 add_definitions(${DEFINES})
-add_library (SF2Synth SHARED ${SOURCES} ${HEADERS})
+add_library (SF2Synth SHARED  ${SOURCES} ${HEADERS})
+
 if (WIN32) 
-set_target_properties(SF2Synth PROPERTIES SUFFIX ".pyd")
+install(TARGETS SF2Synth RUNTIME DESTINATION pyTinySoundFont)
 else()
-set_target_properties(SF2Synth PROPERTIES SUFFIX ".so")
+install(TARGETS SF2Synth DESTINATION pyTinySoundFont)
 endif()
-set_target_properties(SF2Synth PROPERTIES PREFIX "Py")
-
-target_link_libraries(SF2Synth ${LINK_LIBS})
-
-install(TARGETS SF2Synth 
-		RUNTIME DESTINATION pyTinySoundFont)
-
-
-
 

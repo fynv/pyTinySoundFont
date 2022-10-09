@@ -16,20 +16,27 @@ See test/testRT.py for a use case.
 The "SynthNote()" defined in pyTinySoundFont/SF2Synth.py provides a simple interface for single note synthesis. See test/test.py for a use case.
 
 
-## Building with CMake
+## Building
 
 Prerequisites:
 
 * CMake 3.0+
 * Python3
 
-You can simply run CMake to generate makefiles/project files for your system and build. 
-You can set CMAKE_INSTALL_PREFIX to /test so that the test scripts can find pyTinySoundFont.
+```
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ make install
+```
 
-## Building with Setuptools
+## Building Wheel
 
-	$ python3 setup.py build	
-	$ python3 setup.py install
+```
+$ cd test
+$ python3 setup.py bdist_wheel
+```
 
 ## Use cases
 
@@ -48,17 +55,16 @@ Pretty similar to the C version
 
 	# We don't have an output device here, just open a file to simulate
 	with open('dmp.raw','wb') as f:
-		buf =  bytes(512 * 4 * 2) # create a buffer of 512 samples
+		buf =  tsf.F32Buf(512*2) # create a buffer of 512 samples, 2 channels
 		for i in range(200): # render 200 times to the buffer when notes are on
 			g_TinySoundFont.Render(buf, 512, False)
-			f.write(buf)
+			f.write(buf.to_s16(1.0))
 		
 		g_TinySoundFont.NoteOffAll()
-	
+
 		for i in range(10): # render another 10 times after notes are off 
 			g_TinySoundFont.Render(buf, 512, False)
-			f.write(buf)
-	
+			f.write(buf.to_s16(1.0))	
 
 ```
 
@@ -71,18 +77,18 @@ The use case is that sometimes we just want to render some preprogrammed notes t
 
 	import wave
 	import pyTinySoundFont as tsf
-	
+
 	sf2= tsf.LoadSF2('florestan-subset.sf2')
 	presets = tsf.LoadPresets(sf2)
-	
+
 	# Render C5, required length is set to 2 seconds
 	# The actual returned buffer will be a little longer than 2 seconds
 	# There will some extra samples after the loop is ended
 	res=tsf.SynthNote(sf2[1], presets[0], 60, 1.0, 44100*2)
 
-	# Utility to convert float32 to short16
-	wavS16=tsf.F32ToS16(res[1], 1.0)
-	
+	# Convert float32 to short16
+	wavS16=res[1].to_s16(1.0)
+
 	# Here we write the generated samples to a wav file
 	# We can also program to mix the samples with other buffer
 	with wave.open('out.wav', mode='wb') as wavFile:
@@ -91,7 +97,7 @@ The use case is that sometimes we just want to render some preprogrammed notes t
 		wavFile.setframerate(44100)
 		wavFile.setnframes(len(wavS16)//4)
 		wavFile.writeframes(wavS16)
-
+	
 ```
 
 ## License

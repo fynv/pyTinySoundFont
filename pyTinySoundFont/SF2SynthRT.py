@@ -1,7 +1,6 @@
 from .SF2 import LoadSF2
 from .SF2Presets import LoadPresets
 from .SF2Synth import *
-from .PySF2Synth import ZeroBuf
 
 def VoiceKill(v):
 		v['region'] = None
@@ -313,7 +312,7 @@ class TinySoundFont:
 
 	def Render(self, buf, samples, flag_mixing):
 		if not flag_mixing:
-			ZeroBuf(buf)
+			buf.zero();
 
 		for v in self.voices:
 			if v['playingPreset'] !=-1:

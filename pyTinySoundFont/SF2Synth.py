@@ -1,6 +1,5 @@
 import math
-from .PySF2Synth import MixF32
-from .PySF2Synth import Synth
+from .Binding import F32Buf, Synth
 
 TSF_LOOPMODE_NONE=0
 TSF_LOOPMODE_CONTINUOUS=1
@@ -303,7 +302,7 @@ def SynthVoice(inputSamples, numSamples, voice, outputmode, samplerate):
 	if outputmode == MONO:
 		chn =1
 
-	outBuf = b'\0' * (countSamples*chn*4)
+	outBuf = F32Buf(countSamples*chn)
 
 	Synth(inputSamples, outBuf, countSamples, voice['ns'], control)
 
@@ -384,7 +383,7 @@ def SynthNote(inputSamples, preset, key, vel, numSamples, outputmode = STEREO_IN
 				maxNumSamples = res[0]
 			bufs+=[res[1]]
 
-		return (maxNumSamples, MixF32(bufs))
+		return (maxNumSamples, F32Buf.mix(bufs))
 
 		
 		
