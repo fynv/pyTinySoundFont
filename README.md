@@ -5,6 +5,14 @@ This is Python porting of TinySoundFont(https://github.com/schellingb/TinySoundF
 
 We are still relying on C++ for some sample level tasks, so a building process is needed (see below).
 
+## Variations
+
+Latest commits in this repo try to use CFFI instead of CPython API, which is still problematic.
+
+This branch [https://github.com/rdb/pytinysoundfont](https://github.com/rdb/pytinysoundfont) uses the CPython API and releases to PyPi are based on that repo.
+
+## Functions
+
 The "class TinySoundFont" interface defined in pyTinySoundFont/SF2SynthRT.py provides most of the original functions of TinySoundFont, with the following limitations:
 
 * Loading SF2 from memory is not implemented
