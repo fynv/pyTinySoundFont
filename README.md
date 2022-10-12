@@ -9,7 +9,7 @@ We are still relying on C++ for some sample level tasks, so a building process i
 
 Latest commits in this repo try to use CFFI instead of CPython API, which is still problematic.
 
-This branch [https://github.com/rdb/pytinysoundfont](https://github.com/rdb/pytinysoundfont) uses the CPython API and releases to PyPi are based on that repo.
+The branch [https://github.com/rdb/pytinysoundfont](https://github.com/rdb/pytinysoundfont) uses the CPython API and releases to PyPi are based on that repo.
 
 ## Functions
 
