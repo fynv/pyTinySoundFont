@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import struct
 from .wasm_binding import S16ToF32
 

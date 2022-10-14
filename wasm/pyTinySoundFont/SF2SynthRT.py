@@ -312,7 +312,7 @@ class TinySoundFont:
 
 	def Render(self, buf, samples, flag_mixing):
 		if not flag_mixing:
-			buf[0:len(buf)] = b'\0'*len(buf)
+			buf.zero()
 
 		for v in self.voices:
 			if v['playingPreset'] !=-1:

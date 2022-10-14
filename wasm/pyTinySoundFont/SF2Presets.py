@@ -275,7 +275,8 @@ region_operators = [ROP_StartAddrsOffset, ROP_EndAddrsOffset, ROP_StartloopAddrs
 def LoadPresets(sf2):
 	hydra= sf2[0]
 	fontSamples = sf2[1]
-	fontSampleCount = len(fontSamples)//4
+	fontSampleCount = fontSamples.size//4
+	
 	presets=[]
 	if ('phdrs' in hydra) and ('pbags' in hydra) and ('pmods' in hydra) and ('pgens' in hydra) and ('insts' in hydra) and ('ibags' in hydra) and ('imods' in hydra) and ('igens' in hydra) and ('shdrs' in hydra):
 		presetNum= len(hydra['phdrs']) -1 # Exclude EOP

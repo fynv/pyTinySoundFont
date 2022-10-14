@@ -1,6 +1,4 @@
-from .wasm_binding import S16ToF32
-from .wasm_binding import F32ToS16
-from .wasm_binding import MaxValueF32
+from .wasm_binding import ByteArray, S16ToF32, F32ToS16, MaxValueF32
 
 from .SF2 import LoadSF2
 from .SF2Presets import LoadPresets

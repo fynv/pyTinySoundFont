@@ -1,6 +1,7 @@
 import math
-from .wasm_binding import MixF32
-from .wasm_binding import Synth
+
+from .wasm_binding import ByteArray, MixF32, Synth
+
 
 TSF_LOOPMODE_NONE=0
 TSF_LOOPMODE_CONTINUOUS=1
@@ -303,7 +304,8 @@ def SynthVoice(inputSamples, numSamples, voice, outputmode, samplerate):
 	if outputmode == MONO:
 		chn =1
 
-	outBuf = bytearray(b'\0' * (countSamples*chn*4))
+	outBuf = ByteArray(countSamples*chn*4)
+
 
 	Synth(inputSamples, outBuf, countSamples, voice['ns'], control)
 

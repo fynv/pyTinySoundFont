@@ -1,83 +1,96 @@
 import os
-from wasmer import engine, Store, Module, Instance
-from wasmer_compiler_cranelift import Compiler
+import ctypes
+import struct
+from wasmtime import Store, Module, Instance, Func, FuncType
 
-path_wasm = os.path.dirname(__file__)+"/Synth.wasm"
+path_wasm = os.path.dirname(__file__)+"/SF2Synth.wasm"
 
-store = Store(engine.JIT(Compiler))
-module = Module(store, open(path_wasm, 'rb').read())
-instance = Instance(module)
-mem = instance.exports.memory
-raw_view = mem.uint8_view(0)
+store = Store()
+module = Module(store.engine, open(path_wasm, 'rb').read())
+instance = Instance(store, module, [])
+exports = instance.exports(store)
+mem = exports["memory"]
+raw_view = (ctypes.c_ubyte*mem.data_len(store)).from_address(ctypes.addressof(mem.data_ptr(store).contents))
 
+class ByteArray:
+    def __init__(self, size):
+        self.size = size
+        self.data = exports["alloc"](store, size)
+    
+    def __del__(self):
+        exports["dealloc"](store, self.data)
+        
+    def zero(self):
+        exports["zero"](store, self.data, self.size)
+        
+    def get_bytes(self, start = 0, length = -1):
+        if length<0:
+            length = self.size
+        return bytes(raw_view[self.data + start: self.data + start + length])
+        
+    def set_bytes(self, data, start = 0, length = -1):        
+        if length<0:
+            length = self.size
+        raw_view[self.data + start: self.data + start + length] = data
+        
+        
 def S16ToF32(s16bytes):
-    p_s16bytes = 0
     byte_len = len(s16bytes)
     length = byte_len // 2
-    p_f32bytes = byte_len    
-    raw_view[0:byte_len] = s16bytes;    
-    instance.exports.S16ToF32(p_s16bytes, p_f32bytes, length)    
-    return bytes(raw_view[byte_len:byte_len+length*4])
+    arr_s16 = ByteArray(byte_len)
+    arr_s16.set_bytes(s16bytes)
+    arr_f32 = ByteArray(length * 4)
+    exports["S16ToF32"](store, arr_s16.data, arr_f32.data, length)
+    return arr_f32
     
-def F32ToS16(f32bytes, amplitude = 1.0):
-    p_f32bytes = 0
-    byte_len = len(f32bytes)
+def F32ToS16(arr_f32, amplitude = 1.0):
+    byte_len = arr_f32.size
     length = byte_len // 4
-    p_s16bytes = byte_len
-    raw_view[0:byte_len] = f32bytes;
-    instance.exports.F32ToS16(p_f32bytes, p_s16bytes, length, amplitude)
-    return bytes(raw_view[byte_len:byte_len+length*2])
+    arr_s16 = ByteArray(length*2)
+    exports["F32ToS16"](store, arr_f32.data, arr_s16.data, length, amplitude)
+    return arr_s16.get_bytes()
 
-def MaxValueF32(f32bytes):
-    byte_len = len(f32bytes)
+def MaxValueF32(arr_f32):
+    byte_len = arr_f32.size
     length = byte_len // 4
-    raw_view[0:byte_len] = f32bytes;
-    return instance.exports.MaxValueF32(0, length)
+    return exports["MaxValueF32"](store, arr_f32.data, length)
     
 def MixF32(lst_bufs):
-    offsets = []
-    offset = 0
-    for buf in lst_bufs:
-        offsets += [offset]
-        offset_next = offset + len(buf)
-        raw_view[offset:offset_next] = buf        
-        offset = offset_next        
-    offsets += [offset]
-    num_bufs = len(lst_bufs)
-    
-    view_offsets = mem.uint32_view(offset//4)
-    view_offsets[0:num_bufs+1] = offsets;    
-    
-    max_len = instance.exports.MixF32(offset, num_bufs)
-    offset += (num_bufs+1)*4
-    return bytes(raw_view[offset: offset+ max_len*4])
-    
-def Synth(input_buf, output_buf, numSamples, note_state, control):
-    offset = 0
-    p_note_state = offset
-    view_note_state = mem.float64_view(0)        
-    view_note_state[0] = note_state["sourceSamplePosition"]
-    view_note_state[1] = note_state["lowPass"]["z1"]
-    view_note_state[2] = note_state["lowPass"]["z2"]    
-    offset += 8*3    
-    p_control = offset
-    offset = instance.exports.SetControlHeader(p_control, control["outputmode"], control["loopStart"], control["loopEnd"], control["end"], control["panFactorLeft"], control["panFactorRight"], control["effect_sample_block"])    
-    
-    num_ctrl_pnts = len(control["controlPnts"])    
-    for ctrl_pnt in control["controlPnts"]:
-        p_ctrl_pnt = offset
-        lowpass= ctrl_pnt["lowPass"]
-        offset = instance.exports.SetControlPoint(p_ctrl_pnt, ctrl_pnt["looping"], ctrl_pnt["gainMono"], ctrl_pnt["pitchRatio"], lowpass["active"], lowpass["a0"], lowpass["a1"], lowpass["b1"], lowpass["b2"])                
+    numBufs = len(lst_bufs)
+    p_f32bufs = ByteArray(numBufs*4)
+    lengths = ByteArray(numBufs*4)
+    maxlen = 0
+    for i in range(numBufs):
+        arr = lst_bufs[i]
+        length = arr.size // 4
+        p_f32bufs.set_bytes(struct.pack('I', arr.data), i*4, 4)
+        lengths.set_bytes(struct.pack('I', length), i*4, 4)
+        if length>maxlen:
+            maxlen = length    
+    f32Out = ByteArray(maxlen * 4)
+    exports["MixF32"](store, p_f32bufs.data, lengths.data, f32Out.data, maxlen, numBufs)    
+    return f32Out
         
-    p_input = offset
-    size_input = len(input_buf)
-    raw_view[p_input: p_input+size_input] = input_buf    
-    offset += size_input    
-    p_output = offset
-    size_output = len(output_buf)
-    raw_view[p_output: p_output+size_output] = output_buf        
-    instance.exports.Synth(p_input, p_output, numSamples, p_note_state, p_control, num_ctrl_pnts)    
-    note_state["sourceSamplePosition"] = view_note_state[0]
-    note_state["lowPass"]["z1"] = view_note_state[1]
-    note_state["lowPass"]["z2"] = view_note_state[2]      
-    output_buf[0:size_output] = raw_view[p_output: p_output+size_output]   
+def Synth(input_buf, output_buf, numSamples, note_state, control):
+    arr_note_state = ByteArray(8*3)
+    arr_note_state.set_bytes(struct.pack('d', note_state["sourceSamplePosition"]), 0, 8)
+    arr_note_state.set_bytes(struct.pack('d', note_state["lowPass"]["z1"]), 8, 8)
+    arr_note_state.set_bytes(struct.pack('d', note_state["lowPass"]["z2"]), 16, 8)
+    size_header = exports["GetSizeControlHeader"](store)
+    ctrl_header = ByteArray(size_header)
+    exports["SetControlHeader"](store, ctrl_header.data, control["outputmode"], control["loopStart"], control["loopEnd"], control["end"], control["panFactorLeft"], control["panFactorRight"], control["effect_sample_block"])
+    num_ctrl_pnts = len(control["controlPnts"])
+    size_ctrl_pnt = exports["GetSizeCtrlPnt"](store)
+    ctrl_pnts = ByteArray(size_ctrl_pnt * num_ctrl_pnts)
+    for i in range(num_ctrl_pnts):
+        ctrl_pnt = control["controlPnts"][i]
+        lowpass= ctrl_pnt["lowPass"]
+        exports["SetControlPoint"](store, ctrl_pnts.data + size_ctrl_pnt*i, ctrl_pnt["looping"], ctrl_pnt["gainMono"], ctrl_pnt["pitchRatio"], lowpass["active"], lowpass["a0"], lowpass["a1"], lowpass["b1"], lowpass["b2"])
+    exports["SynthWav"](store, input_buf.data, output_buf.data, numSamples, arr_note_state.data, ctrl_header.data, ctrl_pnts.data, num_ctrl_pnts)
+    note_state["sourceSamplePosition"] = struct.unpack('d',  arr_note_state.get_bytes(0, 8))[0]
+    note_state["lowPass"]["z1"] = struct.unpack('d',  arr_note_state.get_bytes(8, 8))[0]
+    note_state["lowPass"]["z2"] = struct.unpack('d',  arr_note_state.get_bytes(16, 8))[0]
+
+
+
+
