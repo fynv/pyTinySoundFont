@@ -13,13 +13,13 @@ with open('dmp.raw','wb') as f:
 	buf =  bytearray(512 * 4 * 2)
 	for i in range(200):
 		g_TinySoundFont.Render(buf, 512, False)
-		f.write(buf)
+		f.write(tsf.F32ToS16(buf))
 	
 	g_TinySoundFont.NoteOffAll()
 
 	for i in range(10):
 		g_TinySoundFont.Render(buf, 512, False)
-		f.write(buf)
+		f.write(tsf.F32ToS16(buf))
 
 
 
