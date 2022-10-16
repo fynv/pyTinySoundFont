@@ -1,15 +1,22 @@
 import os
 import ctypes
 import struct
-from wasmtime import Store, Module, Instance, Func, FuncType
+from wasmtime import Store, Module, Instance, Func, FuncType, ValType
 
 path_wasm = os.path.dirname(__file__)+"/SF2Synth.wasm"
 
 store = Store()
-module = Module(store.engine, open(path_wasm, 'rb').read())
-instance = Instance(store, module, [])
+module = Module.from_file(store.engine, path_wasm)
+
+def notify_memory_growth(index):
+    pass
+    
+emscripten_notify_memory_growth = Func(store, FuncType([ValType.i32()], []), notify_memory_growth)
+
+instance = Instance(store, module, [emscripten_notify_memory_growth])
 exports = instance.exports(store)
 mem = exports["memory"]
+mem.grow(store, 256)
 raw_view = (ctypes.c_ubyte*mem.data_len(store)).from_address(ctypes.addressof(mem.data_ptr(store).contents))
 
 class ByteArray:
